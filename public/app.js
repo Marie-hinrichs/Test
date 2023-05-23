@@ -8,11 +8,39 @@ document.addEventListener("DOMContentLoaded", () => {
   const completedSentencesList = document.getElementById("completed-sentences");
   const scoresList = document.getElementById("scores");
 
+  const users = [
+    { playerName: "Alice", password: "password1" },
+    { playerName: "Bob", password: "password2" },
+    // Weitere Benutzer hinzufügen...
+  ];
+
   let currentPlayer = "";
   let roundTime = 0;
 
   socket.on("connect", () => {
     console.log("Verbunden mit dem Server: " + socket.id);
+  });
+
+  // Authentifizierung
+  socket.on("login", (playerName, password) => {
+    const user = users.find((user) => user.playerName === playerName);
+
+    if (user && user.password === password) {
+      // Authentifizierung erfolgreich
+      const authenticationSuccessful = true;
+      socket.emit("loginResponse", authenticationSuccessful);
+    } else {
+      // Authentifizierung fehlgeschlagen
+      const authenticationSuccessful = false;
+      socket.emit("loginResponse", authenticationSuccessful);
+    }
+  });
+
+  // Anmelde-Event auslösen, wenn der Anmelde-Button geklickt wird
+  document.getElementById("login-btn").addEventListener("click", () => {
+    const playerName = document.getElementById("player-name-input").value;
+    const password = document.getElementById("password-input").value;
+    socket.emit("login", playerName, password);
   });
 
   // Startet das Spiel

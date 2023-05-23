@@ -5,11 +5,15 @@
     <title>Surreales Wörterrätsel</title>
     <!-- Hier können Sie Ihre CSS-Stylesheets einbinden -->
     <link rel="stylesheet" href="styles.css" />
-    <script src="https://cdn.socket.io/4.3.1/socket.io.min.js"></script>
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
   </head>
   <body>
     <h1>Surreales Wörterrätsel</h1>
-
+    <div id="login-container">
+      <input type="text" id="player-name-input" placeholder="Spielername" />
+      <input type="password" id="password-input" placeholder="Passwort" />
+      <button id="login-btn">Anmelden</button>
+    </div>
     <div id="game-container">
       <div id="sentence-container">
         <p id="sentence"></p>
