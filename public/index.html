@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Surreales Wörterrätsel</title>
+    <!-- Hier können Sie Ihre CSS-Stylesheets einbinden -->
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.socket.io/4.3.1/socket.io.min.js"></script>
+  </head>
+  <body>
+    <h1>Surreales Wörterrätsel</h1>
+
+    <div id="game-container">
+      <div id="sentence-container">
+        <p id="sentence"></p>
+      </div>
+      <div id="timer-container">
+        <p id="timer"></p>
+      </div>
+      <div id="input-container">
+        <input
+          type="text"
+          id="sentence-input"
+          placeholder="Vervollständigen Sie den Satz"
+        />
+        <button id="submit-btn">Absenden</button>
+      </div>
+      <div id="completed-container">
+        <h2>Vervollständigte Sätze:</h2>
+        <ul id="completed-sentences"></ul>
+      </div>
+      <div id="scores-container">
+        <h2>Punktestand:</h2>
+        <ul id="scores"></ul>
+      </div>
+    </div>
+
+    <!-- Hier können Sie Ihre JavaScript-Datei einbinden -->
+    <script src="app.js"></script>
+  </body>
+</html>
