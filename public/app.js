@@ -1,18 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
   const socket = io();
 
-  const sentenceContainer = document.getElementById("sentence");
-  const timerContainer = document.getElementById("timer");
-  const sentenceInput = document.getElementById("sentence-input");
-  const submitBtn = document.getElementById("submit-btn");
-  const completedSentencesList = document.getElementById("completed-sentences");
-  const scoresList = document.getElementById("scores");
-
-  const users = [
-    { playerName: "Alice", password: "password1" },
-    { playerName: "Bob", password: "password2" },
-    // Weitere Benutzer hinzufügen...
-  ];
+  const loginContainer = document.getElementById("login-container");
+  const gameContainer = document.getElementById("game-container");
+  const playerNameInput = document.getElementById("player-name-input");
+  const passwordInput = document.getElementById("password-input");
+  const loginBtn = document.getElementById("login-btn");
 
   let currentPlayer = "";
   let roundTime = 0;
@@ -21,26 +14,23 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("Verbunden mit dem Server: " + socket.id);
   });
 
-  // Authentifizierung
-  socket.on("login", (playerName, password) => {
-    const user = users.find((user) => user.playerName === playerName);
-
-    if (user && user.password === password) {
-      // Authentifizierung erfolgreich
-      const authenticationSuccessful = true;
-      socket.emit("loginResponse", authenticationSuccessful);
-    } else {
-      // Authentifizierung fehlgeschlagen
-      const authenticationSuccessful = false;
-      socket.emit("loginResponse", authenticationSuccessful);
-    }
+  // Anmelde-Event auslösen, wenn der Anmelde-Button geklickt wird
+  loginBtn.addEventListener("click", () => {
+    const playerName = playerNameInput.value;
+    const password = passwordInput.value;
+    socket.emit("login", playerName, password);
   });
 
-  // Anmelde-Event auslösen, wenn der Anmelde-Button geklickt wird
-  document.getElementById("login-btn").addEventListener("click", () => {
-    const playerName = document.getElementById("player-name-input").value;
-    const password = document.getElementById("password-input").value;
-    socket.emit("login", playerName, password);
+  // Authentifizierung erfolgreich
+  socket.on("loginResponse", (authenticationSuccessful) => {
+    if (authenticationSuccessful) {
+      // Authentifizierung erfolgreich - Spiel anzeigen
+      loginContainer.style.display = "none";
+      gameContainer.style.display = "block";
+    } else {
+      // Authentifizierung fehlgeschlagen - Fehlermeldung anzeigen
+      alert("Falscher Spielername oder Passwort");
+    }
   });
 
   // Startet das Spiel
