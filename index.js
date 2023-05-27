@@ -14,3 +14,9 @@ game(io);
 server.listen(port, () => {
   console.log(`Server läuft auf Port ${port}`);
 });
+
+const path = require("path");
+app.use(
+  "/socket.io",
+  express.static(path.join(__dirname, "node_modules/socket.io/client-dist"))
+);
