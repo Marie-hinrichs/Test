@@ -17,8 +17,8 @@ module.exports = (io) => {
 
     socket.on("move", (movement) => {
       const { x, y } = movement;
-      player.x = x;
-      player.y = y;
+      player.x += x; // Anstatt die Position zu ersetzen, füge die Bewegung zur aktuellen Position hinzu
+      player.y += y;
       io.emit("update", player);
     });
 
