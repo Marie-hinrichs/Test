@@ -1,45 +1,99 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Surreales Wörterrätsel</title>
-    <!-- Hier können Sie Ihre CSS-Stylesheets einbinden -->
-    <link rel="stylesheet" href="styles.css" />
-    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tag Game</title>
+    <style>
+      #game {
+        position: relative;
+        width: 800px;
+        height: 600px;
+        border: 1px solid #000;
+      }
+      .player {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+      }
+      .tagger {
+        background-color: red;
+      }
+    </style>
   </head>
   <body>
-    <h1>Surreales Wörterrätsel</h1>
-    <div id="login-container">
-      <input type="text" id="player-name-input" placeholder="Spielername" />
-      <input type="password" id="password-input" placeholder="Passwort" />
-      <button id="login-btn">Anmelden</button>
-    </div>
-    <div id="game-container">
-      <div id="sentence-container">
-        <p id="sentence"></p>
-      </div>
-      <div id="timer-container">
-        <p id="timer"></p>
-      </div>
-      <div id="input-container">
-        <input
-          type="text"
-          id="sentence-input"
-          placeholder="Vervollständigen Sie den Satz"
-        />
-        <button id="submit-btn">Absenden</button>
-      </div>
-      <div id="completed-container">
-        <h2>Vervollständigte Sätze:</h2>
-        <ul id="completed-sentences"></ul>
-      </div>
-      <div id="scores-container">
-        <h2>Punktestand:</h2>
-        <ul id="scores"></ul>
-      </div>
-    </div>
+    <div id="game"></div>
 
-    <!-- Hier können Sie Ihre JavaScript-Datei einbinden -->
-    <script src="app.js"></script>
+    <script src="https://cdn.socket.io/socket.io-2.4.1.js"></script>
+    <script>
+      const socket = io();
+
+      socket.on("init", (data) => {
+        const { players, tagger } = data;
+        for (const player of players) {
+          createPlayerElement(player, tagger);
+        }
+      });
+
+      socket.on("update", (player) => {
+        const playerElement = document.getElementById(player.id);
+        if (playerElement) {
+          playerElement.style.left = `${player.x}px`;
+          playerElement.style.top = `${player.y}px`;
+        }
+      });
+
+      socket.on("playerDisconnected", (playerId) => {
+        const playerElement = document.getElementById(playerId);
+        if (playerElement) {
+          playerElement.remove();
+        }
+      });
+
+      socket.on("taggerSelected", (taggerId) => {
+        const previousTaggerElement = document.querySelector(".tagger");
+        if (previousTaggerElement) {
+          previousTaggerElement.classList.remove("tagger");
+        }
+        const newTaggerElement = document.getElementById(taggerId);
+        if (newTaggerElement) {
+          newTaggerElement.classList.add("tagger");
+        }
+      });
+
+      function createPlayerElement(player, tagger) {
+        const playerElement = document.createElement("div");
+        playerElement.id = player.id;
+        playerElement.className = "player";
+        playerElement.style.backgroundColor = player.color;
+        playerElement.style.left = `${player.x}px`;
+        playerElement.style.top = `${player.y}px`;
+        if (tagger === player.id) {
+          playerElement.classList.add("tagger");
+        }
+        document.getElementById("game").appendChild(playerElement);
+      }
+
+      // Bewegung des Spielers erfassen und an den Server senden
+      document.addEventListener("keydown", (event) => {
+        const movement = { x: 0, y: 0 };
+        switch (event.key) {
+          case "ArrowUp":
+            movement.y = -10;
+            break;
+          case "ArrowDown":
+            movement.y = 10;
+            break;
+          case "ArrowLeft":
+            movement.x = -10;
+            break;
+          case "ArrowRight":
+            movement.x = 10;
+            break;
+        }
+        socket.emit("move", movement);
+      });
+    </script>
   </body>
 </html>

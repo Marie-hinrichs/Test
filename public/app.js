@@ -1,126 +1,46 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const socket = io();
+module.exports = (io) => {
+  const players = [];
+  let tagger = null;
 
-  const sentenceContainer = document.getElementById("sentence");
-  const timerContainer = document.getElementById("timer");
-  const sentenceInput = document.getElementById("sentence-input");
-  const submitBtn = document.getElementById("submit-btn");
-  const completedSentencesList = document.getElementById("completed-sentences");
-  const scoresList = document.getElementById("scores");
+  io.on("connection", (socket) => {
+    console.log("Neue Verbindung hergestellt:", socket.id);
 
-  const users = [
-    { playerName: "Alice", password: "password1" },
-    { playerName: "Bob", password: "password2" },
-    // Weitere Benutzer hinzufügen...
-  ];
+    // Neuen Spieler hinzufügen
+    const player = {
+      id: socket.id,
+      x: Math.random() * 800, // Zufällige Startposition X
+      y: Math.random() * 600, // Zufällige Startposition Y
+      color: "#" + ((Math.random() * 0xffffff) << 0).toString(16), // Zufällige Farbe
+    };
+    players.push(player);
 
-  let currentPlayer = "";
-  let roundTime = 0;
+    // Spielerliste an den verbundenen Client senden
+    socket.emit("init", { players, tagger });
 
-  socket.on("connect", () => {
-    console.log("Verbunden mit dem Server: " + socket.id);
-  });
-
-  // Authentifizierung
-  socket.on("login", (playerName, password) => {
-    const user = users.find((user) => user.playerName === playerName);
-
-    if (user && user.password === password) {
-      // Authentifizierung erfolgreich
-      const authenticationSuccessful = true;
-      socket.emit("loginResponse", authenticationSuccessful);
-    } else {
-      // Authentifizierung fehlgeschlagen
-      const authenticationSuccessful = false;
-      socket.emit("loginResponse", authenticationSuccessful);
-    }
-  });
-
-  // Anmelde-Event auslösen, wenn der Anmelde-Button geklickt wird
-  document.getElementById("login-btn").addEventListener("click", () => {
-    const playerName = document.getElementById("player-name-input").value;
-    const password = document.getElementById("password-input").value;
-    socket.emit("login", playerName, password);
-  });
-  // Authentifizierung erfolgreich
-  socket.on("loginResponse", (authenticationSuccessful) => {
-    if (authenticationSuccessful) {
-      // Authentifizierung erfolgreich - Spiel anzeigen
-      loginContainer.style.display = "none";
-      gameContainer.style.display = "block";
-    } else {
-      // Authentifizierung fehlgeschlagen - Fehlermeldung anzeigen
-      alert("Falscher Spielername oder Passwort");
-    }
-  });
-
-  // Startet das Spiel
-  socket.on("startRound", (data) => {
-    currentPlayer = data.currentPlayer;
-    roundTime = data.roundTime;
-
-    sentenceContainer.textContent = data.sentence;
-    timerContainer.textContent = `Verbleibende Zeit: ${roundTime}`;
-
-    // Aktiviert die Eingabe und den Absenden-Button
-    sentenceInput.disabled = false;
-    submitBtn.disabled = false;
-
-    // Startet den Timer
-    startTimer();
-  });
-
-  // Aktualisiert den Timer
-  socket.on("updateTimer", (time) => {
-    timerContainer.textContent = `Verbleibende Zeit: ${time}`;
-  });
-
-  // Zeigt die vervollständigten Sätze aller Spieler an
-  socket.on("showCompletedSentences", (completedSentences) => {
-    completedSentencesList.innerHTML = "";
-
-    completedSentences.forEach((sentence) => {
-      const li = document.createElement("li");
-      li.textContent = sentence.sentence;
-      completedSentencesList.appendChild(li);
+    // Wenn ein Spieler sich bewegt, die Position aktualisieren und an alle Clients senden
+    socket.on("move", (movement) => {
+      const { x, y } = movement;
+      player.x = x;
+      player.y = y;
+      io.emit("update", player);
     });
-  });
 
-  // Aktualisiert den Punktestand
-  socket.on("updateScores", (scores) => {
-    scoresList.innerHTML = "";
-
-    for (const player in scores) {
-      const li = document.createElement("li");
-      li.textContent = `${player}: ${scores[player]}`;
-      scoresList.appendChild(li);
-    }
-  });
-
-  // Ermöglicht das Absenden der vervollständigten Sätze
-  submitBtn.addEventListener("click", () => {
-    const completedSentence = sentenceInput.value.trim();
-
-    if (completedSentence !== "") {
-      sentenceInput.value = "";
-      sentenceInput.disabled = true;
-      submitBtn.disabled = true;
-
-      socket.emit("completeSentence", completedSentence);
-    }
-  });
-
-  // Startet den Timer für die Runde
-  function startTimer() {
-    let time = roundTime;
-
-    const timerInterval = setInterval(() => {
-      time -= 1;
-      socket.emit("updateTimer", time);
-
-      if (time <= 0) {
-        clearInterval(timerInterval);
+    // Wenn ein Spieler das Spiel verlässt, ihn aus der Spielerliste entfernen und an alle Clients senden
+    socket.on("disconnect", () => {
+      const index = players.findIndex((p) => p.id === socket.id);
+      if (index !== -1) {
+        players.splice(index, 1);
+        io.emit("playerDisconnected", socket.id);
+        if (tagger === socket.id) {
+          tagger = null;
+        }
       }
-    }, 1000);
-  }
-});
+    });
+
+    // Wenn das Spiel gestartet wird und mindestens zwei Spieler vorhanden sind, einen Fänger auswählen
+    if (players.length >= 2 && !tagger) {
+      tagger = players[Math.floor(Math.random() * players.length)].id;
+      io.emit("taggerSelected", tagger);
+    }
+  });
+};
